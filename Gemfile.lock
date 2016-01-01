@@ -1,0 +1,12 @@
+GEM
+  specs:
+    reputs (0.0.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  reputs
+
+BUNDLED WITH
+   1.10.6
