@@ -44,12 +44,14 @@ class EventReporterTest < Minitest::Test
   end
 
   def test_queue_count_method_returns_the_proper_count
+    skip
     @e.run_program("load")
 
     assert_equal 5175, @e.run_program("queue count")
   end
 
   def test_queue_clear_empties_the_queue
+    skip
     @e.run_program("load")
     @e.run_program("queue clear")
 
@@ -57,6 +59,7 @@ class EventReporterTest < Minitest::Test
   end
 
   def test_queue_print_has_correct_data
+    skip
     @e.run_program("load tiny_test_file.csv")
     table = @e.run_program("queue print")
 
@@ -65,6 +68,7 @@ class EventReporterTest < Minitest::Test
   end
 
   def test_queue_print_by_has_sorts_table_correctly
+    skip
     @e.run_program("load tiny_test_file.csv")
     table = @e.run_program("queue print by zipcode")
 
@@ -77,6 +81,24 @@ class EventReporterTest < Minitest::Test
 
    assert_equal "Allison", table.rows[0].cells[0].value
    assert_equal "Jennifer", table.rows[1].cells[0].value
+  end
+
+  def test_find_method_finds_what_you_want
+    @e.run_program("load test_file.csv")
+
+    @e.run_program("find state CA")
+    assert_equal 3, @e.current_queue.length
+
+    @e.run_program("find last_name Curry")
+    assert_equal 4, @e.current_queue.length
+  end
+
+  def test_export_current_queue_to_a_new_csv
+    @e.run_program("load test_file.csv")
+    @e.run_program("find state CA")
+    @e.run_program("queue save to omigod.csv")
+
+    assert_equal 3, @e.current_queue.length
   end
 
 end

@@ -3,12 +3,15 @@ require 'terminal-table'
 require 'reputs'
 require 'pry'
 
+#issues to look at: cleaning data, case sensitivity, table print out?
+
 class EventReporter
 
-  attr_reader :open_file, :prepped
+  attr_reader :open_file, :prepped, :current_queue
 
   def initialize
     @open_file = []
+    @current_queue = []
   end
 
   def load_file(filename = nil)
@@ -62,16 +65,16 @@ class EventReporter
 
   def queue(parsed_command)
     if parsed_command[1..2] == ["print", "by"]
-      key = parsed_command.last.to_sym
-      @prepped = sort_data(key)
-      reputs ascii_table
+      print_by(parsed_command)
+    elsif parsed_command[1..2] == ["save", "to"]
+      save_to(parsed_command)
     else
       query = parsed_command[1..-1].join(" ")
       case query
       when "count"
-        reputs @open_file.length
+        reputs @current_queue.length
       when "clear"
-        @open_file = []
+        @current_queue = []
       when "print"
         @prepped = prep_csv_rows
         reputs ascii_table
@@ -80,19 +83,53 @@ class EventReporter
   end
 
   def prep_csv_rows
-    hashes = @open_file.map { |row| row.to_h }
+    hashes = @current_queue.map { |row| row.to_h }
     hashes.map { |row| row.values[2..-1]}
   end
 
   def sort_data(key)
-    hashes = @open_file.map { |row| row.to_h }
+    hashes = @current_queue.map { |row| row.to_h }
     hashes = hashes.sort_by { |h| h[key] }
     hashes.map { |row| row.values[2..-1]}
+  end
+
+  def print_by(parsed_command)
+    key = parsed_command.last.to_sym
+    @prepped = sort_data(key)
+    reputs ascii_table
   end
 
   def ascii_table
     Terminal::Table.new :headings => ['First Name', 'Last Name', 'Email',
     'Phone', 'Address', 'City', 'State', 'Zipcode'], :rows => @prepped
+  end
+
+  def save_to(parsed_command)
+    filename = parsed_command[3]
+    prepped_data = @current_queue.map { |row| row.values[2..-1]}
+    CSV.open(filename, "w") do |csv|
+      csv << headers
+      prepped_data.each do |row|
+        csv << row
+      end
+    end
+    reputs "File written!"
+  end
+
+  def find(parsed_command)
+    attribute = parsed_command[1]
+    criteria = parsed_command[2]
+    hashes = @open_file.map { |row| row.to_h }
+    hashes.each do |hash|
+      if hash.has_value?(criteria) #attribute?
+        @current_queue << hash
+      end
+    end
+    reputs "#{current_queue.length} matching record(s) found"
+  end
+
+  def headers
+    ["FIRST_NAME","LAST_NAME","EMAIL","PHONE","ADDRESS","CITY","STATE","ZIPCODE"]
   end
 
   def run_program(command)
@@ -104,6 +141,8 @@ class EventReporter
       help(parsed_command)
     when "queue"
       queue(parsed_command)
+    when "find"
+      find(parsed_command)
     end
   end
 
