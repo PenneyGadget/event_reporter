@@ -3,7 +3,7 @@ require 'terminal-table'
 require 'reputs'
 require 'pry'
 
-#issues to look at: cleaning data, case sensitivity, table print out?
+#issues to look at: fix bad data, fix table print only being downcased
 
 class EventReporter
 
@@ -22,7 +22,26 @@ class EventReporter
       file = CSV.open("lib/#{filename}", headers: true, header_converters: :symbol)
       @open_file = file.to_a
     end
+    @open_file = clean_file_data
     reputs "File loaded!"
+  end
+
+  def clean_file_data
+    hashes = @open_file.map { |row| row.to_h }
+    hashes.each do |hash|
+      remove_nil(hash)
+    end
+  end
+
+  def remove_nil(hash)
+    hash.keys.each do |key|
+      if hash[key].is_a? Hash
+        remove_nil(hash[key])
+      else
+        hash[key] = "No data" if hash[key].nil?
+      end
+    end
+    true
   end
 
   def help(parsed_command)
@@ -117,11 +136,16 @@ class EventReporter
   end
 
   def find(parsed_command)
-    attribute = parsed_command[1]
-    criteria = parsed_command[2]
+    attribute = parsed_command[1].downcase
+    criteria = parsed_command[2].downcase
     hashes = @open_file.map { |row| row.to_h }
-    hashes.each do |hash|
-      if hash.has_value?(criteria) #attribute?
+
+    downcased_hashes = hashes.each do |hash|
+      hash.each { |k, v| hash[k] = v.downcase }
+    end
+
+    downcased_hashes.each do |hash|
+      if hash[attribute.to_sym] == criteria
         @current_queue << hash
       end
     end

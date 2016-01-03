@@ -101,4 +101,8 @@ class EventReporterTest < Minitest::Test
     assert_equal 3, @e.current_queue.length
   end
 
+  def test_remove_nil_method
+
+  end
+
 end
