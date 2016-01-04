@@ -3,7 +3,7 @@ require 'terminal-table'
 require 'reputs'
 require 'pry'
 
-#issues to look at: fix bad data, fix table print only being downcased
+#still to-do: fix all bad data, fix table print being downcased, tests!
 
 class EventReporter
 
@@ -19,7 +19,7 @@ class EventReporter
       file = CSV.open("lib/event_attendees.csv", headers: true, header_converters: :symbol)
       @open_file = file.to_a
     else
-      file = CSV.open("lib/#{filename}", headers: true, header_converters: :symbol)
+      file = CSV.open("#{filename}", headers: true, header_converters: :symbol)
       @open_file = file.to_a
     end
     @open_file = clean_file_data
@@ -32,6 +32,10 @@ class EventReporter
       remove_nil(hash)
     end
   end
+
+  # def clean_zipcode(zipcode)
+  #   zipcode.to_s.rjust(5,"0")[0..4]
+  # end
 
   def remove_nil(hash)
     hash.keys.each do |key|
@@ -136,8 +140,9 @@ class EventReporter
   end
 
   def find(parsed_command)
+    @current_queue = []
     attribute = parsed_command[1].downcase
-    criteria = parsed_command[2].downcase
+    criteria = parsed_command[2..-1].join(" ").downcase
     hashes = @open_file.map { |row| row.to_h }
 
     downcased_hashes = hashes.each do |hash|
@@ -167,6 +172,8 @@ class EventReporter
       queue(parsed_command)
     when "find"
       find(parsed_command)
+    when "quit"
+      puts "Goodbye!"
     end
   end
 
@@ -180,5 +187,8 @@ if __FILE__ == $0
   loop do
     command = gets.chomp
     e.run_program(command)
+    if command == "quit"
+      exit
+    end
   end
 end
